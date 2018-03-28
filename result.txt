@@ -1,0 +1,42 @@
+#Iuri Zub test tasks result 03.2018.
+
+ #1) Сколько товаров в базе данных, которым не прописана не одна из категорий (товары без категорий).
+SELECT a.Name as name from lst_goods a left join lst_goodstocat b
+on b.GoodId = a.GoodId
+where b.catId is null
+group by a.Name
+
+ #2) Вывести все названия категорий, в которых 0 товаров.
+SELECT a.Name as name from lst_cat a left join lst_goodstocat b
+on b.CatId = a.CatId
+where b.catId is null
+group by a.Name
+
+
+#3) Создайте триггер который не позволяет вставлять в таблицу Lst_Cat такое число в поле CategoryParentId которого не существует среди всех Lst_Cat.CatId - триггер должен генерировать ошибку с текстом "Некорректный CategoryParentId"
+CREATE DEFINER = 'root'@'localhost' TRIGGER `lst_cat_before_ins_tr1` BEFORE INSERT ON `lst_cat`
+  FOR EACH ROW
+BEGIN
+Declare CatIdExists Integer(11);
+Declare MsgText Varchar(100);
+Set MsgText = 'Incorrect CategoryParentId';
+
+select lst_cat.CatId from lst_cat
+where lst_cat.CatId = new.CategoryParentId
+into CatIdExists;
+
+if CatIdExists is null then
+	SIGNAL SQLSTATE '45002' SET MESSAGE_TEXT = MsgText;
+end if;
+END;
+
+
+/*
+ 4) Какие, Вы как ДБА, предложите сделать усовершенствования структуры таблиц данной бд? Цель усовершенствований - чистые данные, более быстрые ответы на запросы.
+Я бы предложил убрать поле "GoodToCatId"
+из таблицы lst_goodstocat.
+Сделать составной первичный ключ из двух оставшихся полей.
+Сделать соответствующий внешний ключ на каждое из этих
+двух полей.
+
+*/
